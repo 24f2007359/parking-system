@@ -1,0 +1,426 @@
+{% extends "base.html" %}
+
+{% block title %}User Dashboard{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <!-- User Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Active Reservations</h5>
+                    <h2 class="card-text">{{ active_reservations }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Hours Parked</h5>
+                    <h2 class="card-text">{{ total_hours }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Total Spent</h5>
+                    <h2 class="card-text">${{ total_spent }}</h2>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Loyalty Points</h5>
+                    <h2 class="card-text">{{ loyalty_points }}</h2>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Stats Charts -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Parking Duration Distribution</h5>
+                    <canvas id="durationChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Monthly Parking Expenses</h5>
+                    <canvas id="expensesChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional User Stats Charts -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Parking Frequency by Day</h5>
+                    <canvas id="frequencyChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-body">
+                    <h5 class="card-title">Preferred Parking Times</h5>
+                    <canvas id="preferredTimesChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Available Parking Lots -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Available Parking Lots</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                {% for lot in available_lots %}
+                <div class="col-md-4 mb-3">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">{{ lot.name }}</h5>
+                            <p class="card-text">
+                                <i class="fas fa-map-marker-alt"></i> {{ lot.location }}<br>
+                                <i class="fas fa-car"></i> Available: {{ lot.available_spots }}/{{ lot.total_spots }}<br>
+                                <i class="fas fa-dollar-sign"></i> Rate: ${{ lot.rate_per_hour }}/hour
+                            </p>
+                            <div class="d-grid">
+                                <button class="btn btn-primary" onclick="showBookingModal({{ lot.id }})">
+                                    Book Spot
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Active Reservations -->
+    <div class="card mb-4">
+        <div class="card-header">
+            <h5 class="mb-0">Active Reservations</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped" id="activeReservationsTable">
+                    <thead>
+                        <tr>
+                            <th>Lot Name</th>
+                            <th>Start Time</th>
+                            <th>Duration</th>
+                            <th>Cost</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for reservation in active_reservations %}
+                        <tr>
+                            <td>{{ reservation.lot.name }}</td>
+                            <td>{{ reservation.start_time.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>{{ reservation.duration }} hours</td>
+                            <td>${{ reservation.cost }}</td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if reservation.is_active else 'warning' }}">
+                                    {{ 'Active' if reservation.is_active else 'Pending' }}
+                                </span>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-danger" 
+                                        onclick="releaseSpot({{ reservation.id }})">
+                                    Release Spot
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reservation History -->
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Reservation History</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped" id="historyTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Lot Name</th>
+                            <th>Duration</th>
+                            <th>Cost</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for reservation in reservation_history %}
+                        <tr>
+                            <td>{{ reservation.start_time.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>{{ reservation.lot.name }}</td>
+                            <td>{{ reservation.duration }} hours</td>
+                            <td>${{ reservation.cost }}</td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if reservation.is_completed else 'danger' }}">
+                                    {{ 'Completed' if reservation.is_completed else 'Cancelled' }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Booking Modal -->
+<div class="modal fade" id="bookingModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Book Parking Spot</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <form id="bookingForm" method="POST" action="{{ url_for('user.book_spot') }}">
+                <div class="modal-body">
+                    {{ form.hidden_tag() }}
+                    <input type="hidden" id="lot_id" name="lot_id">
+                    <div class="mb-3">
+                        <label for="duration" class="form-label">Duration (hours)</label>
+                        <input type="number" class="form-control" id="duration" name="duration" 
+                               required min="1" max="24" value="1">
+                        <div class="form-text">Estimated cost: $<span id="estimatedCost">0.00</span></div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="vehicle_number" class="form-label">Vehicle Number</label>
+                        <input type="text" class="form-control" id="vehicle_number" name="vehicle_number" required>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Confirm Booking</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Initialize DataTables
+$(document).ready(function() {
+    $('#activeReservationsTable, #historyTable').DataTable({
+        order: [[0, 'desc']],
+        pageLength: 5
+    });
+});
+
+// Duration Distribution Chart
+const durationCtx = document.getElementById('durationChart').getContext('2d');
+new Chart(durationCtx, {
+    type: 'doughnut',
+    data: {
+        labels: {{ duration_labels|tojson }},
+        datasets: [{
+            data: {{ duration_data|tojson }},
+            backgroundColor: [
+                'rgba(255, 99, 132, 0.7)',
+                'rgba(54, 162, 235, 0.7)',
+                'rgba(255, 206, 86, 0.7)',
+                'rgba(75, 192, 192, 0.7)',
+                'rgba(153, 102, 255, 0.7)'
+            ],
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'bottom'
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return `${context.label}: ${context.raw}%`;
+                    }
+                }
+            }
+        }
+    }
+});
+
+// Monthly Expenses Chart
+const expensesCtx = document.getElementById('expensesChart').getContext('2d');
+new Chart(expensesCtx, {
+    type: 'bar',
+    data: {
+        labels: {{ expenses_labels|tojson }},
+        datasets: [{
+            label: 'Monthly Expenses',
+            data: {{ expenses_data|tojson }},
+            backgroundColor: 'rgba(54, 162, 235, 0.7)',
+            borderColor: 'rgb(54, 162, 235)',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'top'
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return `Expenses: $${context.raw}`;
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return '$' + value;
+                    }
+                }
+            }
+        }
+    }
+});
+
+// Parking Frequency Chart
+const frequencyCtx = document.getElementById('frequencyChart').getContext('2d');
+new Chart(frequencyCtx, {
+    type: 'bar',
+    data: {
+        labels: {{ frequency_labels|tojson }},
+        datasets: [{
+            label: 'Parking Frequency',
+            data: {{ frequency_data|tojson }},
+            backgroundColor: 'rgba(75, 192, 192, 0.7)',
+            borderColor: 'rgb(75, 192, 192)',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'top'
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                }
+            }
+        }
+    }
+});
+
+// Preferred Times Chart
+const preferredTimesCtx = document.getElementById('preferredTimesChart').getContext('2d');
+new Chart(preferredTimesCtx, {
+    type: 'line',
+    data: {
+        labels: {{ preferred_times_labels|tojson }},
+        datasets: [{
+            label: 'Parking Frequency',
+            data: {{ preferred_times_data|tojson }},
+            borderColor: 'rgb(255, 99, 132)',
+            backgroundColor: 'rgba(255, 99, 132, 0.1)',
+            fill: true,
+            tension: 0.4
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'top'
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                }
+            }
+        }
+    }
+});
+
+// Show Booking Modal
+function showBookingModal(lotId) {
+    const modal = new bootstrap.Modal(document.getElementById('bookingModal'));
+    document.getElementById('lot_id').value = lotId;
+    modal.show();
+}
+
+// Calculate Estimated Cost
+document.getElementById('duration').addEventListener('input', function() {
+    const duration = this.value;
+    const lotId = document.getElementById('lot_id').value;
+    // Fetch rate from server and calculate cost
+    fetch(`/api/lot/${lotId}/rate`)
+        .then(response => response.json())
+        .then(data => {
+            const cost = (duration * data.rate).toFixed(2);
+            document.getElementById('estimatedCost').textContent = cost;
+        });
+});
+
+// Release Spot
+function releaseSpot(reservationId) {
+    if (confirm('Are you sure you want to release this parking spot?')) {
+        fetch(`/user/reservation/${reservationId}/release`, {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token() }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error releasing spot: ' + data.message);
+            }
+        });
+    }
+}
+</script>
+{% endblock %} 

@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Home{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section py-5 text-white" style="background: linear-gradient(rgba(0, 0, 0, 0.7), rgba(0, 0, 0, 0.7)), url('https://images.unsplash.com/photo-1573348722427-f1d6819fdf98?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80'); background-size: cover; background-position: center;">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 text-center">
+                <h1 class="display-4 mb-4 animate__animated animate__fadeInDown">Welcome to Smart Parking</h1>
+                <p class="lead mb-4 animate__animated animate__fadeInUp">Experience hassle-free parking with our intelligent parking management system.</p>
+                {% if not session.get('user_id') %}
+                    <div class="mt-4 animate__animated animate__fadeInUp">
+                        <a href="{{ url_for('auth.login') }}" class="btn btn-primary btn-lg me-3">Login</a>
+                        <a href="{{ url_for('auth.register') }}" class="btn btn-outline-light btn-lg">Register</a>
+                    </div>
+                {% else %}
+                    <div class="mt-4 animate__animated animate__fadeInUp">
+                        {% if session.get('role') == 'admin' %}
+                            <a href="{{ url_for('admin.dashboard') }}" class="btn btn-primary btn-lg">Go to Admin Dashboard</a>
+                        {% else %}
+                            <a href="{{ url_for('auth.user_dashboard') }}" class="btn btn-primary btn-lg">Go to Dashboard</a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features Section -->
+<div class="container py-5">
+    <h2 class="text-center mb-5">Why Choose Us?</h2>
+    <div class="row g-4">
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm hover-card">
+                <div class="card-body text-center">
+                    <i class="fas fa-clock fa-3x mb-3 text-primary"></i>
+                    <h3 class="card-title h5">Real-time Availability</h3>
+                    <p class="card-text">Check parking spot availability in real-time and save time searching for a spot.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm hover-card">
+                <div class="card-body text-center">
+                    <i class="fas fa-mobile-alt fa-3x mb-3 text-primary"></i>
+                    <h3 class="card-title h5">Easy Booking</h3>
+                    <p class="card-text">Book your parking spot in advance with our user-friendly mobile interface.</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card h-100 shadow-sm hover-card">
+                <div class="card-body text-center">
+                    <i class="fas fa-shield-alt fa-3x mb-3 text-primary"></i>
+                    <h3 class="card-title h5">Secure Parking</h3>
+                    <p class="card-text">24/7 monitored parking facilities ensuring the safety of your vehicle.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Call to Action Section -->
+<div class="bg-light py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8 text-center">
+                <h2 class="mb-4">Ready to Get Started?</h2>
+                <p class="lead mb-4">Join thousands of satisfied users who have simplified their parking experience.</p>
+                {% if not session.get('user_id') %}
+                    <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg">Sign Up Now</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add custom styles -->
+<style>
+    .hero-section {
+        padding: 100px 0;
+    }
+    
+    .hover-card {
+        transition: transform 0.3s ease;
+    }
+    
+    .hover-card:hover {
+        transform: translateY(-5px);
+    }
+    
+    .card {
+        border: none;
+        border-radius: 10px;
+    }
+    
+    .btn {
+        border-radius: 5px;
+        padding: 10px 25px;
+    }
+    
+    .btn-primary {
+        background-color: #0d6efd;
+        border-color: #0d6efd;
+    }
+    
+    .btn-primary:hover {
+        background-color: #0b5ed7;
+        border-color: #0b5ed7;
+    }
+</style>
+
+<!-- Add Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<!-- Add Animate.css for animations -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+{% endblock %} 

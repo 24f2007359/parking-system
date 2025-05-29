@@ -1,0 +1,202 @@
+{% extends "base.html" %}
+
+{% block title %}Register{% endblock %}
+
+{% block content %}
+<div class="login-wrapper">
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Left Side - Image -->
+            <div class="col-lg-6 d-none d-lg-block login-image">
+                <div class="overlay"></div>
+                <div class="image-content">
+                    <h2>Join Our Community</h2>
+                    <p>Start your hassle-free parking experience today</p>
+                </div>
+            </div>
+            
+            <!-- Right Side - Register Form -->
+            <div class="col-lg-6 col-md-12">
+                <div class="login-form-container">
+                    <div class="login-form-wrapper">
+                        <div class="text-center mb-4">
+                            <h1 class="login-title">Create Account</h1>
+                            <p class="text-muted">Please fill in your details</p>
+                        </div>
+                        
+                        <form method="POST" action="{{ url_for('auth.register') }}" class="needs-validation" novalidate>
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                            <div class="form-group mb-4">
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-user"></i>
+                                    </span>
+                                    <input type="text" class="form-control" id="username" name="username" 
+                                           placeholder="Username" required minlength="3" maxlength="20" 
+                                           pattern="[a-zA-Z0-9_-]+">
+                                </div>
+                                <div class="invalid-feedback">
+                                    Username must be 3-20 characters long and can only contain letters, numbers, underscores, and hyphens.
+                                </div>
+                            </div>
+                            
+                            <div class="form-group mb-4">
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-lock"></i>
+                                    </span>
+                                    <input type="password" class="form-control" id="password" name="password" 
+                                           placeholder="Password" required minlength="8">
+                                </div>
+                                <div class="invalid-feedback">
+                                    Password must be at least 8 characters long.
+                                </div>
+                            </div>
+                            
+                            <div class="form-group mb-4">
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-lock"></i>
+                                    </span>
+                                    <input type="password" class="form-control" id="confirm_password" 
+                                           name="confirm_password" placeholder="Confirm Password" required>
+                                </div>
+                                <div class="invalid-feedback">
+                                    Passwords must match.
+                                </div>
+                            </div>
+                            
+                            <!-- User/Admin Toggle -->
+                            <div class="form-group mb-4">
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="roleToggle" name="is_admin">
+                                    <label class="form-check-label" for="roleToggle">Register as Admin</label>
+                                </div>
+                            </div>
+                            
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-primary btn-lg">
+                                    Create Account
+                                </button>
+                            </div>
+                        </form>
+                        
+                        <div class="text-center mt-4">
+                            <p class="mb-0">Already have an account? 
+                                <a href="{{ url_for('auth.login') }}" class="text-primary">Sign In</a>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .login-wrapper {
+        min-height: 100vh;
+        background-color: #f8f9fa;
+    }
+    
+    .login-image {
+        background: url('https://images.unsplash.com/photo-1573348722427-f1d6819fdf98?ixlib=rb-1.2.1&auto=format&fit=crop&w=1950&q=80') center/cover no-repeat;
+        position: relative;
+        min-height: 100vh;
+    }
+    
+    .overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(45deg, rgba(13, 110, 253, 0.9), rgba(10, 88, 202, 0.9));
+    }
+    
+    .image-content {
+        position: relative;
+        color: white;
+        padding: 2rem;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+    }
+    
+    .image-content h2 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        margin-bottom: 1rem;
+    }
+    
+    .login-form-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        padding: 2rem;
+    }
+    
+    .login-form-wrapper {
+        width: 100%;
+        max-width: 400px;
+        padding: 2rem;
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+    }
+    
+    .login-title {
+        font-size: 2rem;
+        font-weight: 700;
+        color: #212529;
+    }
+    
+    .input-group-text {
+        background-color: #f8f9fa;
+        border-right: none;
+    }
+    
+    .input-group .form-control {
+        border-left: none;
+    }
+    
+    .input-group .form-control:focus {
+        border-color: #ced4da;
+        box-shadow: none;
+    }
+    
+    .input-group:focus-within {
+        box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+    }
+    
+    .btn-primary {
+        background: linear-gradient(45deg, #0d6efd, #0a58ca);
+        border: none;
+        padding: 0.8rem;
+        font-weight: 500;
+    }
+    
+    .btn-primary:hover {
+        background: linear-gradient(45deg, #0a58ca, #084298);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    @media (max-width: 991.98px) {
+        .login-image {
+            display: none;
+        }
+        
+        .login-form-container {
+            padding: 1rem;
+        }
+    }
+</style>
+
+<!-- Add Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+{% endblock %}

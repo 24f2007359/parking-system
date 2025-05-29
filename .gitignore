@@ -1,0 +1,15 @@
+# Ignore build files
+build/
+target/
+*.class
+*.log
+# Ignore IDE settings
+.idea/
+*.iml
+# Node.js dependencies
+node_modules/
+# Environment files
+.env
+# OS specific
+.DS_Store
+Thumbs.db
