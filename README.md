@@ -1,162 +1,160 @@
-# Parking Management System
+# Smart Parking Management System
 
-A Flask-based web application for managing parking lots, spots, and reservations. This system provides separate interfaces for administrators and users to manage parking operations efficiently.
+A modern web-based parking management system that helps manage parking lots, reservations, and provides real-time analytics for administrators.
 
 ## Features
 
-### Admin Features
-- **Dashboard Overview**
-  - Total parking lots and available spots
-  - Total revenue and active users
-  - Occupancy rate charts (last 7 days)
-  - Revenue distribution by lot
+### For Users
+- **Easy Parking Spot Reservation**
+  - View available parking spots in real-time
+  - Make instant reservations
+  - View parking history
+  - Manage vehicle information
+  - Get parking duration estimates
+
+### For Administrators
+- **Comprehensive Dashboard**
+  - Real-time occupancy monitoring
+  - Revenue tracking and analytics
   - Peak hours analysis
-  - Duration distribution of parking sessions
+  - Parking duration distribution
+  - Active user tracking
 
 - **Parking Lot Management**
-  - Add new parking lots with customizable spots
-  - Edit existing lot details (name, price, address, spots)
-  - Delete parking lots (with safety checks for active reservations)
-  - View lot status and occupancy
-  - Monitor active reservations
-
-### User Features
-- **Dashboard**
+  - Add/Edit/Delete parking lots
+  - Set pricing per hour
+  - Manage parking spots
   - View active reservations
-  - Access reservation history
-  - Track total parking hours and spending
-  - Loyalty points system
-  - Book new parking spots
+  - Monitor lot status
 
-- **Reservation Management**
-  - Book available spots
-  - Complete parking sessions
-  - View parking costs and duration
-  - Access detailed reservation information
+- **Advanced Analytics**
+  - Occupancy rate over time
+  - Revenue by lot
+  - Peak hours analysis
+  - Parking duration distribution
+  - User activity tracking
 
-## Technical Stack
+## Technology Stack
 
-- **Backend**: Python 3.12 with Flask
-- **Database**: SQLite with SQLAlchemy ORM
-- **Frontend**: HTML, CSS, JavaScript
-- **UI Framework**: Bootstrap 5
-- **Charts**: Chart.js
-- **Tables**: DataTables
+- **Backend**
+  - Python 3.x
+  - Flask (Web Framework)
+  - SQLAlchemy (ORM)
+  - SQLite (Database)
 
-## Database Models
+- **Frontend**
+  - HTML5/CSS3
+  - JavaScript
+  - Bootstrap 5
+  - Chart.js (Analytics)
+  - DataTables (Table Management)
+  - Font Awesome (Icons)
 
-### ParkingLot
-- `id`: Primary key
-- `prime_location_name`: Unique name for the lot
-- `address`: Physical location
-- `price`: Rate per hour
-- `is_active`: Lot status
-- `pin_code`: 6-digit location code
-- `maximum_number_of_spots`: Total capacity
-- Relationship with ParkingSpot (one-to-many)
+## Installation
 
-### ParkingSpot
-- `id`: Primary key
-- `lot_id`: Foreign key to ParkingLot
-- `status`: Available/Occupied/Reserved
-- Relationship with Reservation (one-to-many)
-
-### Reservation
-- `id`: Primary key
-- `spot_id`: Foreign key to ParkingSpot
-- `user_id`: Foreign key to User
-- `parking_timestamp`: Start time
-- `leaving_timestamp`: End time
-- `parking_cost`: Total cost
-- `duration`: Parking duration
-
-### User
-- `id`: Primary key
-- `username`: Unique username
-- `role`: Admin/User
-- `loyalty_points`: User's loyalty points
-
-## Setup Instructions
-
-1. **Clone the Repository**
+1. **Clone the repository**
    ```bash
    git clone <repository-url>
-   cd <repository-name>
+   cd parking-management-system
    ```
 
-2. **Create Virtual Environment**
+2. **Create and activate virtual environment**
    ```bash
+   # Windows
    python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
+   .\venv\Scripts\activate
+
+   # Linux/Mac
+   python3 -m venv venv
+   source venv/bin/activate
    ```
 
-3. **Install Dependencies**
+3. **Install dependencies**
    ```bash
    pip install -r requirements.txt
    ```
 
-4. **Initialize Database**
+4. **Initialize the database**
    ```bash
-   flask db init
-   flask db migrate
    flask db upgrade
    ```
 
-5. **Run the Application**
+5. **Run the application**
    ```bash
-   python app.py
+   flask run
    ```
 
-The application will be available at `http://127.0.0.1:5000`
+## Project Structure
 
-## Usage Guide
+```
+parking-management-system/
+├── 24f2007359/
+│   ├── controllers/         # Route handlers and business logic
+│   ├── models/             # Database models
+│   ├── migrations/         # Database migrations
+│   ├── templates/          # HTML templates
+│   │   ├── admin/         # Admin dashboard templates
+│   │   └── user/          # User interface templates
+│   └── static/            # Static files (CSS, JS, images)
+├── requirements.txt        # Project dependencies
+└── README.md              # Project documentation
+```
+
+## Database Schema
+
+### Key Tables
+- **users**: User account information
+- **parking_lots**: Parking lot details
+- **parking_spots**: Individual parking spots
+- **reservations**: Parking spot reservations
+- **vehicles**: User vehicle information
+
+## Usage
 
 ### Admin Access
-1. Login with admin credentials
-2. Access the admin dashboard at `/admin/dashboard`
-3. Manage parking lots, view statistics, and monitor operations
+1. Navigate to `/admin/login`
+2. Use admin credentials to access the dashboard
+3. Manage parking lots, view analytics, and monitor reservations
 
 ### User Access
-1. Register/Login with user credentials
-2. Access the user dashboard at `/auth/user/dashboard`
-3. Book spots and manage reservations
+1. Register/Login at the homepage
+2. Browse available parking lots
+3. Make reservations
+4. View parking history
 
-## Security Features
+## Features in Detail
 
-- Role-based access control (Admin/User)
-- Session management
-- CSRF protection
-- Password hashing
-- Input validation and sanitization
+### Admin Dashboard
+- **Real-time Analytics**
+  - Occupancy rate tracking
+  - Revenue monitoring
+  - User activity analysis
+  - Peak hours visualization
 
-## Error Handling
+- **Parking Lot Management**
+  - Add new parking lots
+  - Edit lot details
+  - Set pricing
+  - Manage spots
+  - View active reservations
 
-The system includes comprehensive error handling for:
-- Invalid inputs
-- Database constraints
-- Active reservation conflicts
-- Authentication/Authorization
-- Session management
+- **User Management**
+  - View user activity
+  - Monitor reservations
+  - Track vehicle information
 
-## API Endpoints
+### User Interface
+- **Reservation System**
+  - Real-time spot availability
+  - Instant booking
+  - Reservation history
+  - Vehicle management
 
-### Admin Routes
-- `GET /admin/dashboard`: Admin dashboard
-- `GET /admin/lot/<id>`: Get lot details
-- `POST /admin/lot/add`: Add new lot
-- `POST /admin/lot/<id>/edit`: Edit lot
-- `POST /admin/lot/<id>/delete`: Delete lot
-- `GET /admin/lot/<id>/spots`: Get lot spots
-
-### User Routes
-- `GET /auth/user/dashboard`: User dashboard
-- `POST /auth/user/dashboard/book`: Book spot
-- `GET /auth/reservation/<id>`: View reservation
-- `POST /auth/user/reservation/<id>/complete`: Complete reservation
-
-### API Routes
-- `GET /api/user/dashboard_data`: User dashboard data
-- `GET /api/parking_lots`: List all parking lots
+- **Parking Information**
+  - Lot locations
+  - Pricing details
+  - Spot availability
+  - Duration estimates
 
 ## Contributing
 
@@ -172,4 +170,11 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 ## Support
 
-For support, please open an issue in the repository or contact the development team. 
+For support, please open an issue in the repository or contact the development team.
+
+## Acknowledgments
+
+- Bootstrap for the frontend framework
+- Chart.js for analytics visualization
+- Font Awesome for icons
+- SQLAlchemy for database management 
