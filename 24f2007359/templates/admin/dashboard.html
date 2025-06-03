@@ -262,11 +262,177 @@
     .btn-group .btn:hover {
         transform: translateY(-1px);
     }
+
+    /* Search styles */
+    .search-container {
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        padding: 1.25rem;
+        margin-top: 1rem;
+    }
+
+    .search-card {
+        background: white;
+        border-radius: 8px;
+    }
+
+    .search-card .input-group {
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        border-radius: 6px;
+        overflow: hidden;
+    }
+
+    .search-card .input-group-text {
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-right: none;
+        color: #6c757d;
+    }
+
+    .search-card .form-control {
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-left: none;
+        padding: 0.75rem 1rem;
+        font-size: 0.95rem;
+    }
+
+    .search-card .form-control:focus {
+        box-shadow: none;
+        border-color: rgba(0, 0, 0, 0.1);
+    }
+
+    .search-card .form-select {
+        min-width: 120px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        border-radius: 6px;
+        padding: 0.5rem 2rem 0.5rem 1rem;
+        font-size: 0.95rem;
+        background-color: white;
+    }
+
+    .search-card .btn-primary {
+        padding: 0.5rem 1.5rem;
+        font-weight: 500;
+    }
+
+    #searchResultsTable th {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #495057;
+        background-color: #f8f9fa;
+    }
+
+    #searchResultsTable td {
+        font-size: 0.875rem;
+        vertical-align: middle;
+    }
+
+    .status-badge {
+        padding: 0.35em 0.65em;
+        font-size: 0.75rem;
+        font-weight: 500;
+        border-radius: 4px;
+        text-transform: uppercase;
+    }
+
+    .status-badge.occupied {
+        background: linear-gradient(45deg, #dc3545, #bb2d3b);
+        color: white;
+    }
+
+    .status-badge.vacant {
+        background: linear-gradient(45deg, #198754, #146c43);
+        color: white;
+    }
+
+    /* Active Reservations Table Styles */
+    #activeReservationsTable th:nth-child(6),
+    #activeReservationsTable td:nth-child(6) {
+        min-width: 120px; /* Adjust minimum width as needed */
+        white-space: nowrap; /* Prevent text wrapping */
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="dashboard-wrapper">
+    <!-- Search Bar Component -->
+    <div class="search-container mb-4">
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <div class="search-card">
+                        <form id="searchForm" class="d-flex gap-3">
+                            <div class="flex-grow-1">
+                                <div class="input-group">
+                                    <span class="input-group-text bg-white">
+                                        <i class="fas fa-search"></i>
+                                    </span>
+                                    <input type="text" class="form-control" id="searchInput" 
+                                           placeholder="Search by user name, spot number, vehicle number, or lot name...">
+                                </div>
+                            </div>
+                            <div class="d-flex gap-2">
+                                <select class="form-select" id="searchType">
+                                    <option value="all">All</option>
+                                    <option value="user">User</option>
+                                    <option value="spot">Spot</option>
+                                    <option value="vehicle">Vehicle</option>
+                                    <option value="lot">Lot</option>
+                                </select>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-search me-2"></i>Search
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Results Modal -->
+    <div class="modal fade" id="searchResultsModal" tabindex="-1" aria-labelledby="searchResultsModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="searchResultsModalLabel">Search Results</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="searchResultsContainer">
+                        <div class="table-responsive">
+                            <table class="table" id="searchResultsTable">
+                                <thead>
+                                    <tr>
+                                        <th>Type</th>
+                                        <th>Lot Name</th>
+                                        <th>Spot #</th>
+                                        <th>Status</th>
+                                        <th>User</th>
+                                        <th>Vehicle</th>
+                                        <th>Start Time</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Search results will be loaded here -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="noResultsMessage" class="text-center py-4 d-none">
+                            <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                            <p class="text-muted">No results found</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="container-fluid">
         <!-- Summary Cards -->
         <div class="row mb-4">
@@ -809,6 +975,122 @@ $(document).ready(function() {
                 alert('Error fetching active reservations.');
             });
     });
+
+    // Search functionality
+    $('#searchForm').on('submit', function(e) {
+        e.preventDefault();
+        const searchQuery = $('#searchInput').val().trim();
+        const searchType = $('#searchType').val();
+        
+        if (!searchQuery) {
+            alert('Please enter a search term');
+            return;
+        }
+
+        // Show loading state
+        const searchButton = $(this).find('button[type="submit"]');
+        const originalButtonText = searchButton.html();
+        searchButton.html('<i class="fas fa-spinner fa-spin me-2"></i>Searching...');
+        searchButton.prop('disabled', true);
+
+        // Fetch search results
+        fetch(`/admin/search?q=${encodeURIComponent(searchQuery)}&type=${searchType}`)
+            .then(response => response.json())
+            .then(data => {
+                const tbody = $('#searchResultsTable tbody');
+                const noResultsMessage = $('#noResultsMessage');
+                
+                // Clear previous results
+                tbody.empty();
+                
+                if (data.results && data.results.length > 0) {
+                    // Show results
+                    noResultsMessage.addClass('d-none');
+                    data.results.forEach(result => {
+                        const row = `
+                            <tr>
+                                <td>${result.type}</td>
+                                <td>${result.lot_name}</td>
+                                <td>${result.spot_number}</td>
+                                <td>
+                                    <span class="status-badge ${result.status.toLowerCase()}">
+                                        ${result.status}
+                                    </span>
+                                </td>
+                                <td>${result.user_name || '-'}</td>
+                                <td>${result.vehicle_number || '-'}</td>
+                                <td>${result.start_time || '-'}</td>
+                                <td>
+                                    <div class="btn-group">
+                                        ${result.status === 'VACANT' ? 
+                                            `<button class="btn btn-sm btn-success" onclick="viewSpotDetails(${result.lot_id}, ${result.spot_number})">
+                                                <i class="fas fa-info-circle"></i> Details
+                                            </button>` :
+                                            `<button class="btn btn-sm btn-info" onclick="viewReservationDetails(${result.reservation_id})">
+                                                <i class="fas fa-info-circle"></i> View Reservation
+                                            </button>`
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                        tbody.append(row);
+                    });
+                } else {
+                    // Show no results message
+                    noResultsMessage.removeClass('d-none');
+                }
+
+                // Show modal
+                const searchModal = new bootstrap.Modal(document.getElementById('searchResultsModal'));
+                searchModal.show();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error performing search. Please try again.');
+            })
+            .finally(() => {
+                // Reset button state
+                searchButton.html(originalButtonText);
+                searchButton.prop('disabled', false);
+            });
+    });
+
+    // Function to view spot details
+    window.viewSpotDetails = function(lotId, spotNumber) {
+        fetch(`/admin/lot/${lotId}/spot/${spotNumber}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // You can implement a modal to show spot details
+                    alert(`Spot ${spotNumber} Details:\nStatus: ${data.status}\nLast Updated: ${data.last_updated}`);
+                } else {
+                    alert('Error loading spot details');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error loading spot details');
+            });
+    };
+
+    // Function to view reservation details
+    window.viewReservationDetails = function(reservationId) {
+        fetch(`/admin/reservation/${reservationId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // You can implement a modal to show reservation details
+                    alert(`Reservation Details:\nUser: ${data.user_name}\nVehicle: ${data.vehicle_number}\nStart Time: ${data.start_time}\nStatus: ${data.status}`);
+                } else {
+                    alert('Error loading reservation details');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error loading reservation details');
+            });
+    };
 });
 </script>
 {% endblock %}

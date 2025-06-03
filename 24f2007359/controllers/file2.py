@@ -3,7 +3,7 @@ from models.file1 import User, ParkingLot, ParkingSpot, db, Reservation
 from functools import wraps
 import re
 from datetime import datetime, timedelta
-from sqlalchemy import func
+from sqlalchemy import func, or_
 
 admin = Blueprint('admin', __name__)
 
@@ -22,9 +22,13 @@ def dashboard():
     # Get statistics
     total_lots = ParkingLot.query.count()
     available_spots = ParkingSpot.query.filter_by(status='available').count()
-    total_revenue = db.session.query(func.sum(Reservation.parking_cost)).filter(
-        Reservation.leaving_timestamp != None
-    ).scalar() or 0
+    
+    # Update total revenue calculation to include all completed reservations
+    total_revenue = db.session.query(func.coalesce(func.sum(Reservation.parking_cost), 0)).filter(
+        Reservation.leaving_timestamp.isnot(None),  # Only completed reservations
+        Reservation.parking_cost.isnot(None)  # Ensure parking cost exists
+    ).scalar()
+    
     active_users = User.query.filter_by(role='user').count()
     
     # Get all parking lots with their spots and occupied spot count
@@ -473,4 +477,181 @@ def get_lot_spots(lot_id):
         return jsonify({
             'success': False,
             'message': f'Error fetching spots: {str(e)}'
-        }) 
+        })
+
+@admin.route('/search')
+@admin_required
+def search():
+    try:
+        query = request.args.get('q', '').strip()
+        search_type = request.args.get('type', 'all')
+        
+        if not query:
+            return jsonify({
+                'success': False,
+                'message': 'Search query is required'
+            }), 400
+
+        results = []
+        
+        # Search in users
+        if search_type in ['all', 'user']:
+            users = User.query.filter(
+                User.username.ilike(f'%{query}%')
+            ).all()
+            
+            for user in users:
+                # Get user's active reservation if any
+                active_reservation = Reservation.query.filter_by(
+                    user_id=user.id,
+                    leaving_timestamp=None
+                ).first()
+                
+                if active_reservation:
+                    spot = ParkingSpot.query.get(active_reservation.spot_id)
+                    lot = ParkingLot.query.get(spot.lot_id)
+                    results.append({
+                        'type': 'user',
+                        'lot_id': lot.id,
+                        'lot_name': lot.prime_location_name,
+                        'spot_number': spot.id,
+                        'status': 'OCCUPIED',
+                        'user_name': user.username,
+                        'vehicle_number': active_reservation.vehicle_number,
+                        'start_time': active_reservation.parking_timestamp.strftime('%Y-%m-%d %H:%M'),
+                        'reservation_id': active_reservation.id
+                    })
+                else:
+                    # Add user without active reservation
+                    results.append({
+                        'type': 'user',
+                        'lot_name': '-',
+                        'spot_number': '-',
+                        'status': 'NO_ACTIVE_RESERVATION',
+                        'user_name': user.username,
+                        'vehicle_number': '-',
+                        'start_time': '-',
+                        'reservation_id': None
+                    })
+
+        # Search in spots
+        if search_type in ['all', 'spot']:
+            spots = ParkingSpot.query.join(
+                ParkingLot, ParkingSpot.lot_id == ParkingLot.id
+            ).filter(
+                or_(
+                    ParkingSpot.id.ilike(f'%{query}%'),
+                    ParkingLot.prime_location_name.ilike(f'%{query}%')
+                )
+            ).all()
+            
+            for spot in spots:
+                lot = ParkingLot.query.get(spot.lot_id)
+                active_reservation = spot.current_reservation
+                
+                results.append({
+                    'type': 'spot',
+                    'lot_id': lot.id,
+                    'lot_name': lot.prime_location_name,
+                    'spot_number': spot.id,
+                    'status': 'OCCUPIED' if active_reservation else 'VACANT',
+                    'user_name': active_reservation.user.username if active_reservation else '-',
+                    'vehicle_number': active_reservation.vehicle_number if active_reservation else '-',
+                    'start_time': active_reservation.parking_timestamp.strftime('%Y-%m-%d %H:%M') if active_reservation else '-',
+                    'reservation_id': active_reservation.id if active_reservation else None
+                })
+
+        # Search in reservations (vehicle numbers, driver names)
+        if search_type in ['all', 'vehicle']:
+            reservations = Reservation.query.join(
+                ParkingSpot, Reservation.spot_id == ParkingSpot.id
+            ).join(
+                ParkingLot, ParkingSpot.lot_id == ParkingLot.id
+            ).filter(
+                or_(
+                    Reservation.vehicle_number.ilike(f'%{query}%'),
+                    Reservation.driver_name.ilike(f'%{query}%'),
+                    Reservation.user_name.ilike(f'%{query}%')
+                )
+            ).all()
+            
+            for reservation in reservations:
+                spot = ParkingSpot.query.get(reservation.spot_id)
+                lot = ParkingLot.query.get(spot.lot_id)
+                
+                results.append({
+                    'type': 'vehicle',
+                    'lot_id': lot.id,
+                    'lot_name': lot.prime_location_name,
+                    'spot_number': spot.id,
+                    'status': 'OCCUPIED' if reservation.is_active else 'COMPLETED',
+                    'user_name': reservation.user_name or reservation.user.username,
+                    'vehicle_number': reservation.vehicle_number,
+                    'start_time': reservation.parking_timestamp.strftime('%Y-%m-%d %H:%M'),
+                    'reservation_id': reservation.id
+                })
+
+        # Search in lots
+        if search_type in ['all', 'lot']:
+            lots = ParkingLot.query.filter(
+                ParkingLot.prime_location_name.ilike(f'%{query}%')
+            ).all()
+            
+            for lot in lots:
+                # Get all spots in the lot
+                spots = ParkingSpot.query.filter_by(lot_id=lot.id).all()
+                for spot in spots:
+                    active_reservation = spot.current_reservation
+                    results.append({
+                        'type': 'lot',
+                        'lot_id': lot.id,
+                        'lot_name': lot.prime_location_name,
+                        'spot_number': spot.id,
+                        'status': 'OCCUPIED' if active_reservation else 'VACANT',
+                        'user_name': active_reservation.user.username if active_reservation else '-',
+                        'vehicle_number': active_reservation.vehicle_number if active_reservation else '-',
+                        'start_time': active_reservation.parking_timestamp.strftime('%Y-%m-%d %H:%M') if active_reservation else '-',
+                        'reservation_id': active_reservation.id if active_reservation else None
+                    })
+
+        return jsonify({
+            'success': True,
+            'results': results
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error performing search: {str(e)}'
+        }), 500
+
+@admin.route('/reservation/<int:reservation_id>')
+@admin_required
+def get_reservation_details(reservation_id):
+    try:
+        reservation = Reservation.query.get_or_404(reservation_id)
+        spot = ParkingSpot.query.get(reservation.spot_id)
+        lot = ParkingLot.query.get(spot.lot_id)
+        
+        return jsonify({
+            'success': True,
+            'reservation_id': reservation.id,
+            'lot_name': lot.prime_location_name,
+            'spot_number': spot.id,
+            'status': 'OCCUPIED' if reservation.leaving_timestamp is None else 'COMPLETED',
+            'user_name': reservation.user_name or reservation.user.username,
+            'user_phone': reservation.user_phone,
+            'vehicle_type': reservation.vehicle_type,
+            'vehicle_number': reservation.vehicle_number,
+            'vehicle_model': reservation.vehicle_model,
+            'vehicle_color': reservation.vehicle_color,
+            'driver_name': reservation.driver_name,
+            'start_time': reservation.parking_timestamp.strftime('%Y-%m-%d %H:%M'),
+            'end_time': reservation.leaving_timestamp.strftime('%Y-%m-%d %H:%M') if reservation.leaving_timestamp else None,
+            'parking_cost': reservation.parking_cost if reservation.leaving_timestamp else None
+        })
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error fetching reservation details: {str(e)}'
+        }), 500 
