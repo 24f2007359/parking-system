@@ -305,7 +305,10 @@ def book_spot():
         reservation = Reservation(
             spot_id=available_spot.id,
             user_id=session['user_id'],
-            parking_timestamp=datetime.now()
+            parking_timestamp=datetime.now(),
+            vehicle_type=request.form.get('vehicle_type'),
+            vehicle_number=request.form.get('vehicle_number'),
+            driver_name=request.form.get('driver_name')
         )
         
         # Update spot status
@@ -362,3 +365,43 @@ def get_reservation(reservation_id):
         })
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@auth.route('/user/reservation/<int:reservation_id>/cancel', methods=['POST'])
+@login_required
+def cancel_reservation(reservation_id):
+    try:
+        # Get the reservation
+        reservation = Reservation.query.get_or_404(reservation_id)
+        
+        # Check if reservation belongs to user
+        if reservation.user_id != session['user_id']:
+            return jsonify({
+                'success': False,
+                'message': 'You do not have permission to cancel this reservation.'
+            }), 403
+        
+        # Check if reservation is already completed or cancelled
+        if reservation.leaving_timestamp is not None:
+            return jsonify({
+                'success': False,
+                'message': 'This reservation is already completed or cancelled.'
+            }), 400
+        
+        # Cancel the reservation
+        reservation.leaving_timestamp = datetime.now()
+        reservation.parking_cost = 0  # No charge for cancelled reservations
+        reservation.spot.status = 'available'  # Free up the spot
+        
+        db.session.commit()
+        
+        return jsonify({
+            'success': True,
+            'message': 'Reservation cancelled successfully.'
+        })
+        
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({
+            'success': False,
+            'message': f'Error cancelling reservation: {str(e)}'
+        }), 500

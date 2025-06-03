@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for, session
+from flask import Blueprint, render_template, request, jsonify, flash, redirect, url_for, session, render_template_string
 from models.file1 import User, ParkingLot, ParkingSpot, db, Reservation
 from functools import wraps
 import re
@@ -27,8 +27,19 @@ def dashboard():
     ).scalar() or 0
     active_users = User.query.filter_by(role='user').count()
     
-    # Get all parking lots with their spots
-    parking_lots = ParkingLot.query.all()
+    # Get all parking lots with their spots and occupied spot count
+    parking_lots_data = []
+    for lot in ParkingLot.query.all():
+        occupied_spots_count = db.session.query(ParkingSpot).join(
+            Reservation, ParkingSpot.id == Reservation.spot_id
+        ).filter(
+            ParkingSpot.lot_id == lot.id,
+            Reservation.leaving_timestamp == None  # Filter for active reservations
+        ).count()
+        parking_lots_data.append({
+            'lot': lot,
+            'occupied_spots_count': occupied_spots_count
+        })
 
     # Get occupancy data for the last 7 days
     last_week = datetime.utcnow() - timedelta(days=7)
@@ -53,15 +64,15 @@ def dashboard():
     revenue_data = []
     revenue_labels = []
     
-    for lot in parking_lots:
+    for lot in parking_lots_data:
         total_revenue = db.session.query(func.sum(Reservation.parking_cost)).join(
             ParkingSpot, Reservation.spot_id == ParkingSpot.id
         ).filter(
-            ParkingSpot.lot_id == lot.id,
+            ParkingSpot.lot_id == lot['lot'].id,
             Reservation.leaving_timestamp != None
         ).scalar() or 0
         revenue_data.append(round(total_revenue, 2))
-        revenue_labels.append(lot.prime_location_name)
+        revenue_labels.append(lot['lot'].prime_location_name)
 
     # Get peak hours data
     peak_hours_data = []
@@ -125,7 +136,7 @@ def dashboard():
                          available_spots=available_spots,
                          total_revenue=total_revenue,
                          active_users=active_users,
-                         parking_lots=parking_lots,
+                         parking_lots=parking_lots_data,
                          occupancy_labels=occupancy_labels,
                          occupancy_data=occupancy_data,
                          revenue_labels=revenue_labels,
@@ -140,6 +151,42 @@ def dashboard():
 def get_lot(lot_id):
     lot = ParkingLot.query.get_or_404(lot_id)
     spots = ParkingSpot.query.filter_by(lot_id=lot_id).all()
+    # Render a spots table snippet (inline) using Jinja2
+    spots_table_snippet = """
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Spot #</th>
+                <th>Status</th>
+                <th>User</th>
+                <th>Start Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for spot in spots %}
+            <tr>
+                <td>{{ spot.id }}</td>
+                <td>{{ spot.status }}</td>
+                <td>
+                    {% if spot.current_reservation %}
+                        {{ spot.current_reservation.user.username }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+                <td>
+                    {% if spot.current_reservation %}
+                        {{ spot.current_reservation.parking_timestamp.strftime('%Y-%m-%d %H:%M') }}
+                    {% else %}
+                        -
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    """
+    active_reservations_table = render_template_string(spots_table_snippet, spots=spots)
     return jsonify({
         'prime_location_name': lot.prime_location_name,
         'price': lot.price,
@@ -150,7 +197,8 @@ def get_lot(lot_id):
             'id': spot.id,
             'status': spot.status,
             'current_reservation': spot.current_reservation.id if spot.current_reservation else None
-        } for spot in spots]
+        } for spot in spots],
+        'active_reservations_table': active_reservations_table
     })
 
 @admin.route('/lot/add', methods=['POST'])
@@ -361,6 +409,44 @@ def delete_lot(lot_id):
         return jsonify({
             'success': False,
             'message': f'An unexpected error occurred: {str(e)}'
+        }), 500
+
+@admin.route('/lot/<int:lot_id>/active_reservations')
+@admin_required
+def get_active_reservations_by_lot(lot_id):
+    try:
+        active_reservations = db.session.query(Reservation, User, ParkingSpot).join(
+            User, Reservation.user_id == User.id
+        ).join(
+            ParkingSpot, Reservation.spot_id == ParkingSpot.id
+        ).filter(
+            ParkingSpot.lot_id == lot_id,
+            Reservation.leaving_timestamp == None  # Filter for active reservations
+        ).all()
+
+        reservations_data = []
+        for reservation, user, spot in active_reservations:
+            reservations_data.append({
+                'spot_number': spot.id,
+                'user_name': reservation.user_name or user.username,
+                'vehicle_type': reservation.vehicle_type,
+                'vehicle_number': reservation.vehicle_number,
+                'driver_name': reservation.driver_name,
+                'start_time': reservation.parking_timestamp.strftime('%Y-%m-%d %H:%M')
+            })
+
+        lot = ParkingLot.query.get(lot_id)
+
+        return jsonify({
+            'success': True,
+            'lot_name': lot.prime_location_name if lot else 'Unknown Lot',
+            'active_reservations': reservations_data
+        })
+
+    except Exception as e:
+        return jsonify({
+            'success': False,
+            'message': f'Error fetching active reservations: {str(e)}'
         }), 500
 
 @admin.route('/lot/<int:lot_id>/spots')

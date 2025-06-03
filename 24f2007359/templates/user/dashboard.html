@@ -263,9 +263,15 @@
                                 </div>
                             </div>
                             <div class="col-md-2 text-end">
-                                <button class="btn btn-sm btn-danger" onclick="completeReservation({{ reservation.id }})">
-                                    <i class="fas fa-check me-1"></i>Complete
-                                </button>
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-danger" onclick="completeReservation({{ reservation.id }})">
+                                        <i class="fas fa-check me-1"></i>Complete
+                                    </button>
+                                    <button class="btn btn-sm btn-warning cancel-reservation-btn" 
+                                            data-reservation-id="{{ reservation.id }}">
+                                        <i class="fas fa-times me-1"></i>Cancel
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -342,6 +348,25 @@
                         <label for="parking_timestamp" class="form-label">Parking Time</label>
                         <input type="datetime-local" class="form-control" id="parking_timestamp" name="parking_timestamp" required>
                     </div>
+                    <div class="mb-3">
+                        <label for="vehicle_type" class="form-label">Vehicle Type</label>
+                        <select class="form-select" id="vehicle_type" name="vehicle_type" required>
+                            <option value="">Select vehicle type...</option>
+                            <option value="Car">Car</option>
+                            <option value="Motorcycle">Motorcycle</option>
+                            <option value="Van">Van</option>
+                            <option value="Truck">Truck</option>
+                            <!-- Add more options if needed -->
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="vehicle_number" class="form-label">Vehicle Number</label>
+                        <input type="text" class="form-control" id="vehicle_number" name="vehicle_number" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="driver_name" class="form-label">Driver's Name</label>
+                        <input type="text" class="form-control" id="driver_name" name="driver_name" required>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
@@ -383,6 +408,8 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     $(document).ready(function() {
+        console.log('Document ready - initializing event listeners');
+        
         // Add form submission handler for new reservation modal
         document.querySelector('#newReservationModal form').addEventListener('submit', function(e) {
             e.preventDefault(); // Prevent default submission temporarily for debugging
@@ -416,6 +443,20 @@
             language: {
                 search: "Search history:"
             }
+        });
+
+        // Attach click handlers to cancel buttons
+        const cancelButtons = document.querySelectorAll('.cancel-reservation-btn');
+        console.log('Found cancel buttons:', cancelButtons.length);
+        
+        cancelButtons.forEach(button => {
+            console.log('Attaching click handler to button:', button);
+            button.addEventListener('click', function(e) {
+                console.log('Cancel button clicked');
+                const reservationId = this.getAttribute('data-reservation-id');
+                console.log('Reservation ID:', reservationId);
+                cancelReservation(reservationId);
+            });
         });
 
         // Fetch dashboard data from API
@@ -717,5 +758,94 @@
             parkingTimestamp.min = now.toISOString().slice(0, 16);
         }
     });
+
+    // Update the cancelReservation function to include debug logging
+    window.cancelReservation = function(reservationId) {
+        console.log('cancelReservation called with ID:', reservationId);
+        if (confirm('Are you sure you want to cancel this reservation? This action cannot be undone.')) {
+            console.log('User confirmed cancellation');
+            // Show loading state
+            const cancelButton = document.querySelector(`button[data-reservation-id="${reservationId}"]`);
+            console.log('Found cancel button:', cancelButton);
+            const originalText = cancelButton.innerHTML;
+            cancelButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cancelling...';
+            cancelButton.disabled = true;
+
+            console.log('Sending cancel request to:', `/auth/user/reservation/${reservationId}/cancel`);
+            fetch(`/auth/user/reservation/${reservationId}/cancel`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                }
+            })
+            .then(response => {
+                console.log('Received response:', response.status);
+                if (!response.ok) {
+                    return response.json().then(data => {
+                        throw new Error(data.message || `HTTP error! status: ${response.status}`);
+                    });
+                }
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response data:', data);
+                if (data.success) {
+                    // Show success toast
+                    const toast = document.createElement('div');
+                    toast.className = 'toast align-items-center text-white bg-success border-0 position-fixed top-0 end-0 m-3';
+                    toast.setAttribute('role', 'alert');
+                    toast.setAttribute('aria-live', 'assertive');
+                    toast.setAttribute('aria-atomic', 'true');
+                    toast.innerHTML = `
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                <i class="fas fa-check-circle me-2"></i>
+                                ${data.message}
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                        </div>
+                    `;
+                    document.body.appendChild(toast);
+                    const bsToast = new bootstrap.Toast(toast);
+                    bsToast.show();
+                    
+                    // Reload page after a short delay
+                    setTimeout(() => window.location.reload(), 2000);
+                } else {
+                    throw new Error(data.message || 'Failed to cancel reservation');
+                }
+            })
+            .catch(error => {
+                console.error('Error in cancelReservation:', error);
+                // Show error toast
+                const toast = document.createElement('div');
+                toast.className = 'toast align-items-center text-white bg-danger border-0 position-fixed top-0 end-0 m-3';
+                toast.setAttribute('role', 'alert');
+                toast.setAttribute('aria-live', 'assertive');
+                toast.setAttribute('aria-atomic', 'true');
+                toast.innerHTML = `
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            <i class="fas fa-exclamation-circle me-2"></i>
+                            ${error.message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                `;
+                document.body.appendChild(toast);
+                const bsToast = new bootstrap.Toast(toast);
+                bsToast.show();
+            })
+            .finally(() => {
+                console.log('Resetting button state');
+                // Reset button state
+                cancelButton.innerHTML = originalText;
+                cancelButton.disabled = false;
+            });
+        } else {
+            console.log('User cancelled the confirmation dialog');
+        }
+    };
 </script>
 {% endblock %}

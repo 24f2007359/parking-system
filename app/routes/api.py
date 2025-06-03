@@ -282,4 +282,70 @@ def get_user_dashboard_data():
         'frequency_data': frequency_data,
         'preferred_times_labels': preferred_times_labels,
         'preferred_times_data': preferred_times_data
+    })
+
+@api.route('/api/admin/spot/<int:spot_id>/details')
+@admin_required
+def get_spot_details(spot_id):
+    spot = ParkingSpot.query.get_or_404(spot_id)
+    current_reservation = Reservation.query.filter_by(
+        spot_id=spot_id,
+        leaving_timestamp=None
+    ).first()
+    
+    if not current_reservation:
+        return jsonify({
+            'error': 'No active reservation for this spot'
+        }), 404
+    
+    user = User.query.get(current_reservation.user_id)
+    
+    return jsonify({
+        'user': {
+            'id': user.id,
+            'name': current_reservation.user_name or user.username,  # Use reservation name if available
+            'email': user.email,
+            'phone': user.phone,
+            'loyalty_points': user.loyalty_points
+        },
+        'reservation': {
+            'id': current_reservation.id,
+            'start_time': current_reservation.parking_timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+            'duration': current_reservation.duration,
+            'vehicle_number': current_reservation.vehicle_number,
+            'vehicle_type': current_reservation.vehicle_type,
+            'vehicle_model': current_reservation.vehicle_model,
+            'vehicle_color': current_reservation.vehicle_color,
+            'parking_cost': current_reservation.parking_cost
+        },
+        'spot': {
+            'id': spot.id,
+            'lot_name': spot.lot.prime_location_name,
+            'status': spot.status
+        }
+    })
+
+@api.route('/api/admin/lot/<int:lot_id>/spots')
+@admin_required
+def get_lot_spots(lot_id):
+    lot = ParkingLot.query.get_or_404(lot_id)
+    spots = []
+    
+    for spot in lot.spots:
+        current_reservation = Reservation.query.filter_by(
+            spot_id=spot.id,
+            leaving_timestamp=None
+        ).first()
+        
+        spots.append({
+            'id': spot.id,
+            'status': spot.status,
+            'current_user': current_reservation.user.name if current_reservation else None,
+            'start_time': current_reservation.parking_timestamp.strftime('%Y-%m-%d %H:%M:%S') if current_reservation else None
+        })
+    
+    return jsonify({
+        'lot_id': lot.id,
+        'lot_name': lot.prime_location_name,
+        'spots': spots
     }) 

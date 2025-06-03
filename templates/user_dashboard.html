@@ -145,10 +145,16 @@
                                 </span>
                             </td>
                             <td>
-                                <button class="btn btn-sm btn-danger" 
-                                        onclick="releaseSpot({{ reservation.id }})">
-                                    Release Spot
-                                </button>
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-danger" 
+                                            onclick="releaseSpot({{ reservation.id }})">
+                                        Release Spot
+                                    </button>
+                                    <button class="btn btn-sm btn-warning cancel-reservation-btn" 
+                                            data-reservation-id="{{ reservation.id }}">
+                                        Cancel
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                         {% endfor %}
@@ -196,32 +202,70 @@
     </div>
 </div>
 
-<!-- Booking Modal -->
-<div class="modal fade" id="bookingModal" tabindex="-1">
+<!-- New Reservation Modal -->
+<div class="modal fade" id="newReservationModal" tabindex="-1" aria-labelledby="newReservationModalLabel" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
             <div class="modal-header">
-                <h5 class="modal-title">Book Parking Spot</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                <h5 class="modal-title" id="newReservationModalLabel">New Parking Reservation</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="bookingForm" method="POST" action="{{ url_for('user.book_spot') }}">
+            <form action="{{ url_for('auth.book_spot') }}" method="POST">
                 <div class="modal-body">
-                    {{ form.hidden_tag() }}
-                    <input type="hidden" id="lot_id" name="lot_id">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    
+                    <!-- User Information -->
                     <div class="mb-3">
-                        <label for="duration" class="form-label">Duration (hours)</label>
-                        <input type="number" class="form-control" id="duration" name="duration" 
-                               required min="1" max="24" value="1">
-                        <div class="form-text">Estimated cost: $<span id="estimatedCost">0.00</span></div>
+                        <label for="user_name" class="form-label">Your Name</label>
+                        <input type="text" class="form-control" id="user_name" name="user_name" required>
                     </div>
+
+                    <!-- Vehicle Information -->
                     <div class="mb-3">
                         <label for="vehicle_number" class="form-label">Vehicle Number</label>
                         <input type="text" class="form-control" id="vehicle_number" name="vehicle_number" required>
                     </div>
+                    <div class="mb-3">
+                        <label for="vehicle_type" class="form-label">Vehicle Type</label>
+                        <select class="form-select" id="vehicle_type" name="vehicle_type" required>
+                            <option value="">Select vehicle type...</option>
+                            <option value="Car">Car</option>
+                            <option value="SUV">SUV</option>
+                            <option value="Van">Van</option>
+                            <option value="Truck">Truck</option>
+                            <option value="Motorcycle">Motorcycle</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="vehicle_model" class="form-label">Vehicle Model</label>
+                        <input type="text" class="form-control" id="vehicle_model" name="vehicle_model" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="vehicle_color" class="form-label">Vehicle Color</label>
+                        <input type="text" class="form-control" id="vehicle_color" name="vehicle_color" required>
+                    </div>
+
+                    <!-- Parking Details -->
+                    <div class="mb-3">
+                        <label for="lot_id" class="form-label">Select Parking Lot</label>
+                        <select class="form-select" id="lot_id" name="lot_id" required>
+                            <option value="">Choose a parking lot...</option>
+                            {% for lot in available_lots %}
+                            <option value="{{ lot.id }}">{{ lot.prime_location_name }} - ${{ lot.price }}/hour</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="parking_timestamp" class="form-label">Parking Time</label>
+                        <input type="datetime-local" class="form-control" id="parking_timestamp" name="parking_timestamp" required>
+                    </div>
+                    <div class="mb-3">
+                        <div class="form-text">Rate: $<span id="estimatedCost">0.00</span>/hour</div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Confirm Booking</button>
+                    <button type="submit" class="btn btn-primary">Create Reservation</button>
                 </div>
             </form>
         </div>
@@ -234,11 +278,100 @@
 <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-// Initialize DataTables
+// Define cancelReservation in global scope
+function cancelReservation(reservationId) {
+    if (confirm('Are you sure you want to cancel this reservation? This action cannot be undone.')) {
+        // Show loading state
+        const cancelButton = document.querySelector(`button[data-reservation-id="${reservationId}"]`);
+        const originalText = cancelButton.innerHTML;
+        cancelButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Cancelling...';
+        cancelButton.disabled = true;
+
+        fetch(`/user/reservation/${reservationId}/cancel`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+            }
+        })
+        .then(response => {
+            if (!response.ok) {
+                return response.json().then(data => {
+                    throw new Error(data.message || `HTTP error! status: ${response.status}`);
+                });
+            }
+            return response.json();
+        })
+        .then(data => {
+            if (data.success) {
+                // Show success toast
+                const toast = document.createElement('div');
+                toast.className = 'toast align-items-center text-white bg-success border-0 position-fixed top-0 end-0 m-3';
+                toast.setAttribute('role', 'alert');
+                toast.setAttribute('aria-live', 'assertive');
+                toast.setAttribute('aria-atomic', 'true');
+                toast.innerHTML = `
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            <i class="fas fa-check-circle me-2"></i>
+                            ${data.message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>
+                `;
+                document.body.appendChild(toast);
+                const bsToast = new bootstrap.Toast(toast);
+                bsToast.show();
+                
+                // Reload page after a short delay
+                setTimeout(() => window.location.reload(), 2000);
+            } else {
+                throw new Error(data.message || 'Failed to cancel reservation');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            // Show error toast
+            const toast = document.createElement('div');
+            toast.className = 'toast align-items-center text-white bg-danger border-0 position-fixed top-0 end-0 m-3';
+            toast.setAttribute('role', 'alert');
+            toast.setAttribute('aria-live', 'assertive');
+            toast.setAttribute('aria-atomic', 'true');
+            toast.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="fas fa-exclamation-circle me-2"></i>
+                        ${error.message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            `;
+            document.body.appendChild(toast);
+            const bsToast = new bootstrap.Toast(toast);
+            bsToast.show();
+        })
+        .finally(() => {
+            // Reset button state
+            cancelButton.innerHTML = originalText;
+            cancelButton.disabled = false;
+        });
+    }
+}
+
+// Initialize DataTables and attach event listeners
 $(document).ready(function() {
+    // Initialize DataTables
     $('#activeReservationsTable, #historyTable').DataTable({
         order: [[0, 'desc']],
         pageLength: 5
+    });
+
+    // Attach click handlers to cancel buttons
+    document.querySelectorAll('.cancel-reservation-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const reservationId = this.getAttribute('data-reservation-id');
+            cancelReservation(reservationId);
+        });
     });
 });
 
@@ -385,22 +518,27 @@ new Chart(preferredTimesCtx, {
 
 // Show Booking Modal
 function showBookingModal(lotId) {
-    const modal = new bootstrap.Modal(document.getElementById('bookingModal'));
+    const modal = new bootstrap.Modal(document.getElementById('newReservationModal'));
     document.getElementById('lot_id').value = lotId;
-    modal.show();
-}
-
-// Calculate Estimated Cost
-document.getElementById('duration').addEventListener('input', function() {
-    const duration = this.value;
-    const lotId = document.getElementById('lot_id').value;
-    // Fetch rate from server and calculate cost
+    // Fetch rate for the selected lot
     fetch(`/api/lot/${lotId}/rate`)
         .then(response => response.json())
         .then(data => {
-            const cost = (duration * data.rate).toFixed(2);
-            document.getElementById('estimatedCost').textContent = cost;
+            document.getElementById('estimatedCost').textContent = data.rate.toFixed(2);
         });
+    modal.show();
+}
+
+// Calculate Estimated Cost when lot selection changes
+document.getElementById('lot_id').addEventListener('change', function() {
+    const lotId = this.value;
+    if (lotId) {
+        fetch(`/api/lot/${lotId}/rate`)
+            .then(response => response.json())
+            .then(data => {
+                document.getElementById('estimatedCost').textContent = data.rate.toFixed(2);
+            });
+    }
 });
 
 // Release Spot

@@ -1,0 +1,202 @@
+                            <td>{{ lot.available_spots }}</td>
+                            <td>${{ lot.rate_per_hour }}</td>
+                            <td>
+                                <span class="badge bg-{{ 'success' if lot.is_active else 'danger' }}">
+                                    {{ 'Active' if lot.is_active else 'Inactive' }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="btn-group">
+                                    <button type="button" class="btn btn-sm btn-info" 
+                                            onclick="viewLotDetails({{ lot.id }})">
+                                        <i class="fas fa-eye"></i> View Spots
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-primary" 
+                                            onclick="editLot({{ lot.id }})">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-danger" 
+                                            onclick="deleteLot({{ lot.id }})">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </td>
+
+<!-- Spot Details Modal -->
+<div class="modal fade" id="spotDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Spot Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6 class="mb-3">User Information</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <tr>
+                                    <th>Name:</th>
+                                    <td id="userName">-</td>
+                                </tr>
+                                <tr>
+                                    <th>Email:</th>
+                                    <td id="userEmail">-</td>
+                                </tr>
+                                <tr>
+                                    <th>Phone:</th>
+                                    <td id="userPhone">-</td>
+                                </tr>
+                                <tr>
+                                    <th>Loyalty Points:</th>
+                                    <td id="userLoyaltyPoints">-</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <h6 class="mb-3">Reservation Details</h6>
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <tr>
+                                    <th>Vehicle Number:</th>
+                                    <td id="vehicleNumber">-</td>
+                                </tr>
+                                <tr>
+                                    <th>Vehicle Type:</th>
+                                    <td id="vehicleType">-</td>
+                                </tr>
+                                <tr>
+                                    <th>Vehicle Model:</th>
+                                    <td id="vehicleModel">-</td>
+                                </tr>
+                                <tr>
+                                    <th>Vehicle Color:</th>
+                                    <td id="vehicleColor">-</td>
+                                </tr>
+                                <tr>
+                                    <th>Start Time:</th>
+                                    <td id="startTime">-</td>
+                                </tr>
+                                <tr>
+                                    <th>Duration:</th>
+                                    <td id="duration">-</td>
+                                </tr>
+                                <tr>
+                                    <th>Cost:</th>
+                                    <td id="parkingCost">-</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Lot Details Modal -->
+<div class="modal fade" id="lotDetailsModal" tabindex="-1">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Lot Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="table-responsive">
+                    <table class="table table-hover" id="spotsTable">
+                        <thead>
+                            <tr>
+                                <th>Spot ID</th>
+                                <th>Status</th>
+                                <th>Current User</th>
+                                <th>Start Time</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="spotsTableBody">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+// View Lot Details
+function viewLotDetails(lotId) {
+    fetch(`/api/admin/lot/${lotId}/spots`)
+        .then(response => response.json())
+        .then(data => {
+            const spotsTableBody = document.getElementById('spotsTableBody');
+            spotsTableBody.innerHTML = '';
+            
+            data.spots.forEach(spot => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${spot.id}</td>
+                    <td>
+                        <span class="badge bg-${spot.status === 'available' ? 'success' : 'danger'}">
+                            ${spot.status}
+                        </span>
+                    </td>
+                    <td>${spot.current_user || 'N/A'}</td>
+                    <td>${spot.start_time || 'N/A'}</td>
+                    <td>
+                        ${spot.status === 'occupied' ? 
+                            `<button class="btn btn-sm btn-info" onclick="viewSpotDetails(${spot.id})">
+                                <i class="fas fa-info-circle"></i> View Details
+                            </button>` : 
+                            'N/A'}
+                    </td>
+                `;
+                spotsTableBody.appendChild(row);
+            });
+            
+            const modal = new bootstrap.Modal(document.getElementById('lotDetailsModal'));
+            modal.show();
+        });
+}
+
+// View Spot Details
+function viewSpotDetails(spotId) {
+    fetch(`/api/admin/spot/${spotId}/details`)
+        .then(response => response.json())
+        .then(data => {
+            // Update user information
+            document.getElementById('userName').textContent = data.user.name;
+            document.getElementById('userEmail').textContent = data.user.email;
+            document.getElementById('userPhone').textContent = data.user.phone;
+            document.getElementById('userLoyaltyPoints').textContent = data.user.loyalty_points;
+            
+            // Update reservation and vehicle information
+            document.getElementById('vehicleNumber').textContent = data.reservation.vehicle_number;
+            document.getElementById('vehicleType').textContent = data.reservation.vehicle_type;
+            document.getElementById('vehicleModel').textContent = data.reservation.vehicle_model;
+            document.getElementById('vehicleColor').textContent = data.reservation.vehicle_color;
+            document.getElementById('startTime').textContent = data.reservation.start_time;
+            document.getElementById('duration').textContent = data.reservation.duration ? 
+                `${data.reservation.duration.toFixed(1)} hours` : 'N/A';
+            document.getElementById('parkingCost').textContent = data.reservation.parking_cost ? 
+                `$${data.reservation.parking_cost.toFixed(2)}` : 'N/A';
+            
+            const modal = new bootstrap.Modal(document.getElementById('spotDetailsModal'));
+            modal.show();
+        })
+        .catch(error => {
+            console.error('Error fetching spot details:', error);
+            alert('Error fetching spot details. Please try again.');
+        });
+}
+{% endblock %} 

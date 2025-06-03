@@ -10,22 +10,33 @@
     .dashboard-wrapper {
         background-color: #f8f9fa;
         min-height: 100vh;
-        padding: 2rem 0;
+        padding: 1.5rem;
+        background: linear-gradient(135deg, #f5f7fa 0%, #e4e8eb 100%);
+    }
+
+    .container-fluid {
+        max-width: 1400px;
+        margin: 0 auto;
     }
 
     .stat-card {
         background: white;
-        border-radius: 15px;
-        padding: 1.5rem;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border-radius: 12px;
+        padding: 1.25rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         transition: transform 0.3s ease;
         border: none;
         position: relative;
         overflow: hidden;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
     }
 
     .stat-card:hover {
-        transform: translateY(-5px);
+        transform: translateY(-3px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
     }
 
     .stat-card::before {
@@ -34,7 +45,8 @@
         top: 0;
         left: 0;
         width: 100%;
-        height: 4px;
+        height: 3px;
+        opacity: 0.8;
     }
 
     .stat-card.bg-primary::before { background: linear-gradient(45deg, #0d6efd, #0a58ca); }
@@ -43,83 +55,201 @@
     .stat-card.bg-warning::before { background: linear-gradient(45deg, #ffc107, #cc9a06); }
 
     .stat-card .card-title {
-        font-size: 1rem;
+        font-size: 0.875rem;
         font-weight: 600;
-        margin-bottom: 1rem;
+        margin-bottom: 0.75rem;
         color: rgba(255, 255, 255, 0.9);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
 
     .stat-card .card-text {
-        font-size: 2rem;
+        font-size: 1.75rem;
         font-weight: 700;
         margin-bottom: 0;
+        line-height: 1.2;
     }
 
     .stat-card .icon {
         position: absolute;
-        right: 1.5rem;
-        top: 1.5rem;
-        font-size: 2rem;
+        right: 1.25rem;
+        top: 1.25rem;
+        font-size: 1.75rem;
         opacity: 0.2;
     }
 
     .chart-card {
         background: white;
-        border-radius: 15px;
-        padding: 1.5rem;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border-radius: 12px;
+        padding: 1.25rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         margin-bottom: 1.5rem;
         border: none;
+        height: 100%;
     }
 
     .chart-card .card-title {
-        font-size: 1.1rem;
+        font-size: 1rem;
         font-weight: 600;
-        margin-bottom: 1.5rem;
+        margin-bottom: 1.25rem;
         color: #2c3e50;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .chart-card .card-title i {
+        font-size: 1rem;
+        color: #6c757d;
     }
 
     .table-card {
         background: white;
-        border-radius: 15px;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        border-radius: 12px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
         border: none;
+        margin-bottom: 1.5rem;
     }
 
     .table-card .card-header {
         background: white;
-        border-bottom: 1px solid #eee;
-        padding: 1.5rem;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        padding: 1.25rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
     }
 
     .table-card .card-header h5 {
         margin: 0;
         font-weight: 600;
         color: #2c3e50;
+        font-size: 1.1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+
+    .table-card .card-header h5 i {
+        font-size: 1rem;
+        color: #6c757d;
+    }
+
+    .table-card .card-body {
+        padding: 1.25rem;
+    }
+
+    .table {
+        margin-bottom: 0;
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+    }
+
+    .table thead th {
+        background-color: #f8f9fa;
+        border-bottom: 2px solid rgba(0, 0, 0, 0.05);
+        color: #495057;
+        font-weight: 600;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        padding: 0.75rem 1rem;
+    }
+
+    .table tbody td {
+        padding: 0.75rem 1rem;
+        vertical-align: middle;
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        color: #495057;
+        font-size: 0.875rem;
+    }
+
+    .table tbody tr:hover {
+        background-color: rgba(0, 0, 0, 0.02);
+    }
+
+    .badge {
+        padding: 0.35em 0.65em;
+        font-weight: 500;
+        font-size: 0.75rem;
+        border-radius: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .badge.bg-success {
+        background: linear-gradient(45deg, #198754, #146c43) !important;
+    }
+
+    .badge.bg-danger {
+        background: linear-gradient(45deg, #dc3545, #bb2d3b) !important;
+    }
+
+    /* Row spacing */
+    .row {
+        margin-bottom: 1.5rem;
+    }
+
+    .row:last-child {
+        margin-bottom: 0;
+    }
+
+    /* Modal styles */
+    .modal-content {
+        border-radius: 12px;
+        border: none;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    .modal-header {
+        border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+        padding: 1.25rem;
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+    }
+
+    .modal-footer {
+        border-top: 1px solid rgba(0, 0, 0, 0.05);
+        padding: 1.25rem;
+    }
+
+    /* Form styles */
+    .form-label {
+        font-weight: 500;
+        color: #495057;
+        font-size: 0.875rem;
+        margin-bottom: 0.5rem;
+    }
+
+    .form-control, .form-select {
+        border-radius: 6px;
+        border: 1px solid rgba(0, 0, 0, 0.1);
+        padding: 0.5rem 0.75rem;
+        font-size: 0.875rem;
+        transition: all 0.2s ease;
+    }
+
+    .form-control:focus, .form-select:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.15);
     }
 
     .btn-primary {
         background: linear-gradient(45deg, #0d6efd, #0a58ca);
         border: none;
-        padding: 0.6rem 1.2rem;
+        padding: 0.5rem 1rem;
         font-weight: 500;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+        font-size: 0.875rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
     }
 
     .btn-primary:hover {
-        background: linear-gradient(45deg, #0a58ca, #084298);
-        transform: translateY(-1px);
-        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-
-    .table {
-        margin-bottom: 0;
-    }
-
-    .table th {
-        font-weight: 600;
-        color: #2c3e50;
-    }
-
     .badge {
         padding: 0.5em 0.8em;
         font-weight: 500;
@@ -226,29 +356,39 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for lot in parking_lots %}
+                            {% for item in parking_lots %}
                             <tr>
-                                <td>{{ lot.id }}</td>
-                                <td>{{ lot.prime_location_name }}</td>
-                                <td>{{ lot.address }}</td>
-                                <td>{{ lot.maximum_number_of_spots }}</td>
-                                <td>{{ lot.available_spots }}</td>
-                                <td>${{ lot.price }}</td>
+                                <td>{{ item.lot.id }}</td>
+                                <td>{{ item.lot.prime_location_name }}</td>
+                                <td>{{ item.lot.address }}</td>
+                                <td>{{ item.lot.maximum_number_of_spots }}</td>
+                                <td>{{ item.lot.available_spots }} / {{ item.occupied_spots_count }}</td>
+                                <td>${{ item.lot.price }}</td>
                                 <td>
-                                    <span class="badge bg-{{ 'success' if lot.is_active else 'danger' }}">
-                                        {{ 'Active' if lot.is_active else 'Inactive' }}
+                                    <span class="badge bg-{{ 'success' if item.lot.is_active else 'danger' }}">
+                                        {{ 'Active' if item.lot.is_active else 'Inactive' }}
                                     </span>
                                 </td>
                                 <td>
                                     <div class="btn-group">
                                         <button type="button" class="btn btn-sm btn-info" 
-                                                onclick="editLot({{ lot.id }})">
+                                                onclick="editLot({{ item.lot.id }})">
                                             <i class="fas fa-edit"></i>
                                         </button>
                                         <button type="button" class="btn btn-sm btn-danger" 
-                                                onclick="deleteLot({{ lot.id }})">
+                                                onclick="deleteLot({{ item.lot.id }})">
                                             <i class="fas fa-trash"></i>
                                         </button>
+                                        <button type="button" class="btn btn-sm btn-info" 
+                                                onclick="viewLotDetails({{ item.lot.id }})">
+                                            <i class="fas fa-eye"></i> View Spots
+                                        </button>
+                                        {% if item.occupied_spots_count > 0 %}
+                                        <button type="button" class="btn btn-sm btn-primary view-active-reservations" 
+                                                data-lot-id="{{ item.lot.id }}">
+                                            <i class="fas fa-car"></i> View Active
+                                        </button>
+                                        {% endif %}
                                     </div>
                                 </td>
                             </tr>
@@ -256,6 +396,40 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Active Reservations Modal -->
+<div class="modal fade" id="activeReservationsModal" tabindex="-1" aria-labelledby="activeReservationsModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="activeReservationsModalLabel">Active Reservations for <span id="lotName"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div id="activeReservationsTableContainer">
+                    <table class="table" id="activeReservationsTable">
+                        <thead>
+                            <tr>
+                                <th>Spot #</th>
+                                <th>User</th>
+                                <th>Vehicle Type</th>
+                                <th>Vehicle Number</th>
+                                <th>Driver's Name</th>
+                                <th>Start Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <!-- Active reservation data will be loaded here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
@@ -554,150 +728,86 @@ $(document).ready(function() {
             deleteButton.disabled = true;
 
             fetch(`/admin/lot/${lotId}/delete`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                }
+                method: 'DELETE'
             })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(data => {
-                        throw new Error(data.message || `HTTP error! status: ${response.status}`);
-                    });
-                }
-                return response.json();
-            })
+            .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    // Show success toast
-                    const toast = document.createElement('div');
-                    toast.className = 'toast align-items-center text-white bg-success border-0 position-fixed top-0 end-0 m-3';
-                    toast.setAttribute('role', 'alert');
-                    toast.setAttribute('aria-live', 'assertive');
-                    toast.setAttribute('aria-atomic', 'true');
-                    toast.innerHTML = `
-                        <div class="d-flex">
-                            <div class="toast-body">
-                                <i class="fas fa-check-circle me-2"></i>
-                                ${data.message}
-                            </div>
-                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-                        </div>
-                    `;
-                    document.body.appendChild(toast);
-                    const bsToast = new bootstrap.Toast(toast);
-                    bsToast.show();
-                    
-                    // Reload page after a short delay
-                    setTimeout(() => window.location.reload(), 2000);
+                    // Reload the page
+                    location.reload();
                 } else {
-                    throw new Error(data.message || 'Error deleting parking lot');
+                    alert('Error deleting lot');
+                    deleteButton.innerHTML = originalText;
+                    deleteButton.disabled = false;
                 }
             })
             .catch(error => {
                 console.error('Error:', error);
-                
-                // If there are active reservations, show them in a modal
-                if (error.message.includes('active reservations')) {
-                    fetch(`/admin/lot/${lotId}/spots`)
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success && data.spots) {
-                                const activeSpots = data.spots.filter(spot => spot.status === 'occupied');
-                                if (activeSpots.length > 0) {
-                                    // Create and show modal with active reservations
-                                    const modalHtml = `
-                                        <div class="modal fade" id="activeReservationsModal" tabindex="-1">
-                                            <div class="modal-dialog modal-lg">
-                                                <div class="modal-content">
-                                                    <div class="modal-header">
-                                                        <h5 class="modal-title">Active Reservations</h5>
-                                                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                                                    </div>
-                                                    <div class="modal-body">
-                                                        <div class="alert alert-warning">
-                                                            <i class="fas fa-exclamation-triangle me-2"></i>
-                                                            Cannot delete parking lot while there are active reservations.
-                                                        </div>
-                                                        <div class="table-responsive">
-                                                            <table class="table">
-                                                                <thead>
-                                                                    <tr>
-                                                                        <th>Spot #</th>
-                                                                        <th>User</th>
-                                                                        <th>Start Time</th>
-                                                                    </tr>
-                                                                </thead>
-                                                                <tbody>
-                                                                    ${activeSpots.map(spot => `
-                                                                        <tr>
-                                                                            <td>${spot.id}</td>
-                                                                            <td>${spot.current_reservation ? spot.current_reservation.user : 'N/A'}</td>
-                                                                            <td>${spot.current_reservation ? new Date(spot.current_reservation.start_time).toLocaleString() : 'N/A'}</td>
-                                                                        </tr>
-                                                                    `).join('')}
-                                                                </tbody>
-                                                            </table>
-                                                        </div>
-                                                    </div>
-                                                    <div class="modal-footer">
-                                                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    `;
-                                    
-                                    // Remove existing modal if any
-                                    const existingModal = document.getElementById('activeReservationsModal');
-                                    if (existingModal) {
-                                        existingModal.remove();
-                                    }
-                                    
-                                    // Add new modal to document
-                                    document.body.insertAdjacentHTML('beforeend', modalHtml);
-                                    
-                                    // Show modal
-                                    const modal = new bootstrap.Modal(document.getElementById('activeReservationsModal'));
-                                    modal.show();
-                                }
-                            }
-                        })
-                        .catch(console.error);
-                } else {
-                    // Show error toast for other errors
-                    const toast = document.createElement('div');
-                    toast.className = 'toast align-items-center text-white bg-danger border-0 position-fixed top-0 end-0 m-3';
-                    toast.setAttribute('role', 'alert');
-                    toast.setAttribute('aria-live', 'assertive');
-                    toast.setAttribute('aria-atomic', 'true');
-                    toast.innerHTML = `
-                        <div class="d-flex">
-                            <div class="toast-body">
-                                <i class="fas fa-exclamation-circle me-2"></i>
-                                ${error.message}
-                            </div>
-                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-                        </div>
-                    `;
-                    document.body.appendChild(toast);
-                    const bsToast = new bootstrap.Toast(toast);
-                    bsToast.show();
-                }
-            })
-            .finally(() => {
-                // Reset button state
+                alert('Error deleting lot');
                 deleteButton.innerHTML = originalText;
                 deleteButton.disabled = false;
             });
         }
     };
 
-    // Initialize all tooltips
-    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
-    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
-        return new bootstrap.Tooltip(tooltipTriggerEl);
+    // Function to view lot details
+    window.viewLotDetails = function(lotId) {
+        // Fetch lot data
+        fetch(`/admin/lot/${lotId}`)
+            .then(response => response.json())
+            .then(data => {
+                // Populate modal
+                document.getElementById('lotName').innerText = data.prime_location_name;
+                document.getElementById('activeReservationsTableContainer').innerHTML = data.active_reservations_table;
+                
+                // Show modal
+                var activeReservationsModal = new bootstrap.Modal(document.getElementById('activeReservationsModal'));
+                activeReservationsModal.show();
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error loading lot details');
+            });
+    };
+
+    // Handle click on 'View Active' button
+    $(document).on('click', '.view-active-reservations', function() {
+        const lotId = $(this).data('lot-id');
+        
+        // Fetch active reservations for the lot
+        fetch(`/admin/lot/${lotId}/active_reservations`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Populate modal with active reservation data
+                    document.getElementById('lotName').innerText = data.lot_name;
+                    const tbody = document.getElementById('activeReservationsTable').querySelector('tbody');
+                    tbody.innerHTML = ''; // Clear previous data
+                    data.active_reservations.forEach(reservation => {
+                        const row = `
+                            <tr>
+                                <td>${reservation.spot_number}</td>
+                                <td>${reservation.user_name}</td>
+                                <td>${reservation.vehicle_type}</td>
+                                <td>${reservation.vehicle_number}</td>
+                                <td>${reservation.driver_name}</td>
+                                <td>${reservation.start_time}</td>
+                            </tr>
+                        `;
+                        tbody.innerHTML += row;
+                    });
+                    
+                    // Show the modal
+                    var activeReservationsModal = new bootstrap.Modal(document.getElementById('activeReservationsModal'));
+                    activeReservationsModal.show();
+                } else {
+                    alert('Error fetching active reservations: ' + data.message);
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('Error fetching active reservations.');
+            });
     });
 });
 </script>
