@@ -368,4 +368,25 @@ main {
     .card {
         margin-bottom: 1rem;
     }
+}
+
+/* Active Reservations Modal/Table Responsive Fixes */
+#activeReservationsModal .modal-dialog {
+    max-width: 95vw;
+}
+#activeReservationsTable th, #activeReservationsTable td {
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+#activeReservationsTable th {
+    font-weight: 600;
+}
+@media (max-width: 1200px) {
+    #activeReservationsModal .modal-dialog {
+        max-width: 100vw;
+    }
+    #activeReservationsTable th, #activeReservationsTable td {
+        max-width: 100px;
+    }
 } 

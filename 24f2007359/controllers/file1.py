@@ -306,6 +306,7 @@ def book_spot():
             spot_id=available_spot.id,
             user_id=session['user_id'],
             parking_timestamp=datetime.now(),
+            user_name=request.form.get('user_name'),
             vehicle_type=request.form.get('vehicle_type'),
             vehicle_number=request.form.get('vehicle_number'),
             driver_name=request.form.get('driver_name')

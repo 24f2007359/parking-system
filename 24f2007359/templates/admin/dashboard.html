@@ -351,6 +351,18 @@
         min-width: 120px; /* Adjust minimum width as needed */
         white-space: nowrap; /* Prevent text wrapping */
     }
+
+    #activeReservationsModal .modal-dialog {
+        max-width: 95vw;
+    }
+    #activeReservationsTable th, #activeReservationsTable td {
+        white-space: nowrap;
+    }
+    @media (max-width: 1200px) {
+        #activeReservationsModal .modal-dialog {
+            max-width: 100vw;
+        }
+    }
 </style>
 {% endblock %}
 
@@ -569,30 +581,31 @@
 
 <!-- Active Reservations Modal -->
 <div class="modal fade" id="activeReservationsModal" tabindex="-1" aria-labelledby="activeReservationsModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
+    <div class="modal-dialog modal-xl">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="activeReservationsModalLabel">Active Reservations for <span id="lotName"></span></h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <div id="activeReservationsTableContainer">
-                    <table class="table" id="activeReservationsTable">
+                <div class="table-responsive" id="activeReservationsTableContainer">
+                    <table class="table table-striped align-middle" id="activeReservationsTable">
                         <thead>
                             <tr>
-                                <th>Spot #</th>
-                                <th>User</th>
-                                <th>Vehicle Type</th>
-                                <th>Vehicle Number</th>
-                                <th>Driver's Name</th>
-                                <th>Start Time</th>
+                                <th style="max-width: 80px; white-space: nowrap;">SPOT #</th>
+                                <th style="max-width: 120px; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">USER</th>
+                                <th style="max-width: 120px; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">VEHICLE TYPE</th>
+                                <th style="max-width: 150px; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">VEHICLE NUMBER</th>
+                                <th style="max-width: 150px; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">DRIVER'S NAME</th>
+                                <th style="max-width: 150px; white-space: nowrap; text-overflow: ellipsis; overflow: hidden;">START TIME</th>
                             </tr>
                         </thead>
                         <tbody>
-                            <!-- Active reservation data will be loaded here -->
+                            <!-- Data will be injected here -->
                         </tbody>
                     </table>
                 </div>
+                <div id="noActiveReservationsMsg" class="text-center text-muted mt-3" style="display:none;">No active reservations for this lot.</div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
@@ -610,6 +623,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form action="{{ url_for('admin.add_lot') }}" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="prime_location_name" class="form-label">Location Name</label>
@@ -650,6 +664,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="editLotForm" method="POST">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="edit_prime_location_name" class="form-label">Location Name</label>
@@ -939,16 +954,21 @@ $(document).ready(function() {
     // Handle click on 'View Active' button
     $(document).on('click', '.view-active-reservations', function() {
         const lotId = $(this).data('lot-id');
-        
-        // Fetch active reservations for the lot
+        document.getElementById('lotName').innerText = '';
+        const tbody = document.getElementById('activeReservationsTable').querySelector('tbody');
+        tbody.innerHTML = '';
+        $('#activeReservationsLoading').show();
+        $('#activeReservationsNoData').hide();
+        $('#activeReservationsTableContainer').hide();
+        var activeReservationsModal = new bootstrap.Modal(document.getElementById('activeReservationsModal'));
+        activeReservationsModal.show();
         fetch(`/admin/lot/${lotId}/active_reservations`)
             .then(response => response.json())
             .then(data => {
-                if (data.success) {
-                    // Populate modal with active reservation data
-                    document.getElementById('lotName').innerText = data.lot_name;
-                    const tbody = document.getElementById('activeReservationsTable').querySelector('tbody');
-                    tbody.innerHTML = ''; // Clear previous data
+                document.getElementById('lotName').innerText = data.lot_name;
+                $('#activeReservationsLoading').hide();
+                if (data.success && data.active_reservations && data.active_reservations.length > 0) {
+                    $('#activeReservationsTableContainer').show();
                     data.active_reservations.forEach(reservation => {
                         const row = `
                             <tr>
@@ -962,15 +982,17 @@ $(document).ready(function() {
                         `;
                         tbody.innerHTML += row;
                     });
-                    
-                    // Show the modal
-                    var activeReservationsModal = new bootstrap.Modal(document.getElementById('activeReservationsModal'));
-                    activeReservationsModal.show();
+                    $('#activeReservationsNoData').hide();
                 } else {
-                    alert('Error fetching active reservations: ' + data.message);
+                    $('#activeReservationsTableContainer').show();
+                    tbody.innerHTML = '';
+                    $('#activeReservationsNoData').show();
                 }
             })
             .catch(error => {
+                $('#activeReservationsLoading').hide();
+                $('#activeReservationsNoData').show();
+                $('#activeReservationsTableContainer').show();
                 console.error('Error:', error);
                 alert('Error fetching active reservations.');
             });
