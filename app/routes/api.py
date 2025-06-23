@@ -1,5 +1,5 @@
 from flask import Blueprint, jsonify, session
-from models.file1 import ParkingLot, ParkingSpot, Reservation, User
+from parking-system.24f2007359.models.file1 import ParkingLot, ParkingSpot, Reservation, User
 from datetime import datetime, timedelta
 from sqlalchemy import func
 from functools import wraps

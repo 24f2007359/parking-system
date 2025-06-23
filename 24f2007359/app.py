@@ -5,8 +5,8 @@ from flask_wtf.csrf import CSRFProtect
 def create_app():
     # Initialize Flask app
     app = Flask(__name__,
-                template_folder='templates',
-                static_folder='static',
+                template_folder='24f2007359/templates',
+                static_folder='24f2007359/static',
                 static_url_path='/static')
     
     # Configure app
